@@ -17,12 +17,16 @@ with file.open("w", newline="") as f:
     w.writerow(["date", "exercise", "duration_min", "rpe"])
 
     # 60 Einträge (= 30 Tage × 2 Sessions)
-    for i in range(60):
-        w.writerow([
-            start + dt.timedelta(days=i // 2),                  # Datum
+    
+    rows = [
+        [
+            start + dt.timedelta(days=i // 2),
             random.choice(["Dribbling", "Sprint", "Pass", "Schuss"]),
-            random.choice([20, 30, 40, 50]),                    # Minuten
-            random.randint(4, 10)                               # RPE 1-10
-        ])
+            random.choice([20, 30, 40, 50]),
+            random.randint(4, 10),
+        ]
+        for i in range(60)
+    ]
+    w.writerows(rows)
 
 print(f"✔️  Wrote {file}")
