@@ -17,6 +17,13 @@ st.divider()               # hübscher Trenner
 if data_file.exists():
     df = pd.read_csv(data_file, parse_dates=["date"])
 
+    # --- NEW: Selectbox-Filter für Übung -----------------
+    exercise_options = ["Alle"] + sorted(df.exercise.unique())
+    choice = st.selectbox("Übung filtern", exercise_options)
+    if choice != "Alle":
+        df = df[df.exercise == choice]
+    # -----------------------------------------------------
+
     st.subheader("📊 Letzte Trainingseinheiten")
     st.dataframe(df.tail(20))
 
