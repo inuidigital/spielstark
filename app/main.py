@@ -1,7 +1,9 @@
 import streamlit as st
-import pandas as pd                 # schon seit Week 2 nötig
-import pathlib                      # Dateipfade (Week 2)
-import sqlite3, random, json, datetime as dt   # NEW – Week 4
+import pandas as pd          # schon seit Week 2 nötig
+import pathlib               # Dateipfade
+import sqlite3, random, json, datetime as dt
+from app.ai_utils import get_analysis, get_plan
+
 
 # Spielername in der Session ablegen, falls noch nicht vorhanden
 if "player" not in st.session_state:
@@ -17,6 +19,60 @@ st.session_state["player"] = st.text_input(
 
 if st.session_state["player"]:
     st.success(f"Willkommen, {st.session_state['player']}! Bereit für dein bestes Training?")
+
+# ---------- Onboarding-Fragebogen ----------------------------------
+if "profile" not in st.session_state:
+    st.session_state["profile"] = {}
+
+with st.form("onboard"):
+    st.subheader("🏁 Dein Spielerprofil")
+
+    pos = st.radio("1. Lieblingsposition?", list("ABCDEFGHIJK"))
+    col1, col2 = st.columns(2)
+    with col1:
+        talent   = st.selectbox("Größtes Talent", list("ABCDE"))
+    with col2:
+        weakness = st.selectbox("Größte Schwäche", list("ABCDE"))
+
+    freq     = st.radio("Extra-Training / Woche?", list("ABCDE"))
+    decision = st.radio("Entscheidung unter Druck", list("ABCDE"))
+    goal     = st.radio("Ziel in 3 Jahren?", list("ABCDE"))
+
+    submitted = st.form_submit_button("Analyse erstellen")
+
+if submitted:
+    profile = {
+        "Q1": pos,
+        "Q2_Talent": talent,
+        "Q2_Schwäche": weakness,
+        "Q3": freq,
+        "Q4": decision,
+        "Q5": goal,
+        "name": st.session_state["player"],
+    }
+    st.session_state["profile"]  = profile
+    analysis = get_analysis(profile)
+    st.session_state["analysis"] = analysis
+    st.markdown("## Deine Analyse")
+    st.markdown(analysis, unsafe_allow_html=True)
+# -------------------------------------------------------------------
+
+# ---------- Paywall & 6-Wochen-Plan --------------------------------
+if st.session_state.get("analysis") and not st.session_state.get("paid"):
+    st.info("🎁 Analyse gratis ✔️  \n🔒 Pers. 6-Wochen-Plan: 4,99 €/Monat")
+    if st.button("Abo abschließen (Demo)"):
+        st.session_state["paid"] = True
+    st.stop()
+
+if st.session_state.get("paid"):
+    if "plan" not in st.session_state:
+        st.session_state["plan"] = get_plan(st.session_state["analysis"])
+        (pathlib.Path("app/data") /
+         f"plan_{st.session_state['player']}.md").write_text(
+             st.session_state["plan"], encoding="utf-8")
+    st.markdown("## Dein 6-Wochen-Trainingsplan")
+    st.markdown(st.session_state["plan"], unsafe_allow_html=True)
+# -------------------------------------------------------------------
 
 
     # ---------- WEEK 4 : Mood-Check-In ---------------------------------
