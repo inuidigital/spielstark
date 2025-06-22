@@ -2,7 +2,59 @@ import streamlit as st
 import pandas as pd          # schon seit Week 2 nötig
 import pathlib               # Dateipfade
 import sqlite3, random, json, datetime as dt
+import sys, pathlib
+sys.path.append(str(pathlib.Path(__file__).resolve().parent.parent))
 from app.ai_utils import get_analysis, get_plan
+
+# ------------------------------------------------------------
+# Mapping Buchstabe ➜ Klartext (wird im UI angezeigt)
+# ------------------------------------------------------------
+POS_TXT = {
+    "A": "Torwart",
+    "B": "Rechtsverteidiger",
+    "C": "Innenverteidiger",
+    "D": "Linksverteidiger",
+    "E": "6er (Def. MF)",
+    "F": "8er (Zentr. MF)",
+    "G": "10er (Off. MF)",
+    "H": "Rechter Flügel",
+    "I": "Linker Flügel",
+    "J": "Mittelstürmer",
+    "K": "Hängende Spitze",
+}
+
+SKILL_TXT = {
+    "A": "Technik / Ballbehandlung",
+    "B": "Schnelligkeit / Antritt",
+    "C": "Spielintelligenz / Überblick",
+    "D": "Physis / Kraft & Ausdauer",
+    "E": "Mentalität / Fokus",
+}
+
+FREQ_TXT = {
+    "A": "Gar nicht",
+    "B": "1× pro Woche",
+    "C": "2–3× pro Woche",
+    "D": "4–5× pro Woche",
+    "E": "Täglich / fast täglich",
+}
+
+DEC_TXT = {
+    "A": "Sicherheitspass zurück / quer",
+    "B": "1-gegen-1-Dribbling",
+    "C": "Sofort schneller Steilpass",
+    "D": "Ball behaupten, warten",
+    "E": "Direkt aufs Tor abschließen",
+}
+
+GOAL_TXT = {
+    "A": "Spaß-Kicker Freizeitliga",
+    "B": "Stammspieler Verein",
+    "C": "Leistungsträger Region/Bezirk",
+    "D": "NLZ-Spieler (hoher Aufwand)",
+    "E": "U-Nationalteam / Profiweg",
+}
+# ------------------------------------------------------------
 
 
 # Spielername in der Session ablegen, falls noch nicht vorhanden
@@ -27,16 +79,48 @@ if "profile" not in st.session_state:
 with st.form("onboard"):
     st.subheader("🏁 Dein Spielerprofil")
 
-    pos = st.radio("1. Lieblingsposition?", list("ABCDEFGHIJK"))
+    # 1 Lieblingsposition
+    pos = st.radio(
+        "Lieblingsposition?",
+        options=list(POS_TXT),                    # gibt A-K zurück
+        format_func=lambda k: POS_TXT[k]          # zeigt Klartext
+    )
+
+    # 2 Talent / Schwäche – nebeneinander
     col1, col2 = st.columns(2)
     with col1:
-        talent   = st.selectbox("Größtes Talent", list("ABCDE"))
+        talent = st.selectbox(
+            "Größtes Talent",
+            options=list(SKILL_TXT),
+            format_func=lambda k: SKILL_TXT[k]
+        )
     with col2:
-        weakness = st.selectbox("Größte Schwäche", list("ABCDE"))
+        weakness = st.selectbox(
+            "Größte Schwäche",
+            options=list(SKILL_TXT),
+            format_func=lambda k: SKILL_TXT[k]
+        )
 
-    freq     = st.radio("Extra-Training / Woche?", list("ABCDE"))
-    decision = st.radio("Entscheidung unter Druck", list("ABCDE"))
-    goal     = st.radio("Ziel in 3 Jahren?", list("ABCDE"))
+    # 3 Trainingshäufigkeit
+    freq = st.radio(
+        "Extra-Training / Woche?",
+        options=list(FREQ_TXT),
+        format_func=lambda k: FREQ_TXT[k]
+    )
+
+    # 4 Entscheidung unter Druck
+    decision = st.radio(
+        "Entscheidung unter Druck",
+        options=list(DEC_TXT),
+        format_func=lambda k: DEC_TXT[k]
+    )
+
+    # 5 Ziel & Einsatzbereitschaft
+    goal = st.radio(
+        "Ziel in 3 Jahren?",
+        options=list(GOAL_TXT),
+        format_func=lambda k: GOAL_TXT[k]
+    )
 
     submitted = st.form_submit_button("Analyse erstellen")
 
